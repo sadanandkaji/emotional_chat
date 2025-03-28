@@ -1,18 +1,42 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, FC } from "react";
 
 interface ButtonProps {
-  children: ReactNode;
+  variant: "primary" | "send";
   className?: string;
-  appName: string;
+  onClick?: () => void;
+  size: "lg" | "sm";
+  children: ReactNode | string;
+  disabled?: boolean;
 }
 
-export const Button = ({ children, className, appName }: ButtonProps) => {
+const buttonVariants = {
+  primary: "bg-blue-500 hover:bg-blue-600 text-white",
+  send: "bg-purple-500 hover:bg-purple-600 text-white",
+};
+
+const buttonSizes = {
+  lg: "px-6 py-3 text-lg",
+  sm: "px-3 py-1 text-sm",
+};
+
+export const Button: FC<ButtonProps> = ({
+  size,
+  variant,
+  className = "",
+  onClick,
+  children,
+  disabled = false,
+})=> {
   return (
     <button
-      className={className}
-      onClick={() => alert(`Hello from your ${appName} app!`)}
+      type="button"
+      aria-label={typeof children === "string" ? children : "button"}
+      className={`${buttonVariants[variant]} ${buttonSizes[size]} rounded-lg transition 
+      ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${className}`}
+      onClick={onClick}
+      disabled={disabled}
     >
       {children}
     </button>
