@@ -5,7 +5,7 @@ import { ReactNode, FC } from "react";
 interface ButtonProps {
   variant: "primary" | "send";
   className?: string;
-  onClick?: () => void;
+  onClick?: () => void |any;
   size: "lg" | "sm";
   children: ReactNode | string;
   disabled?: boolean;
