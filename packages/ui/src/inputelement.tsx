@@ -6,6 +6,7 @@ interface InputTypo {
   placeholder: string;
   type: "text" | "password";
   className?: string;
+  reference?:any
 }
 
 const inputTypes = {
@@ -20,9 +21,10 @@ const inputSizes = {
 
 const common = "rounded-lg flex items-center border border-gray-300 focus:outline-none";
 
-export const Inputelement: FC<InputTypo> = ({ variant, size, placeholder, type, className = "" }) => {
+export const Inputelement: FC<InputTypo> = ({ variant, size, placeholder, type, className = "",reference }) => {
   return (
     <input
+    ref={reference}
       type={type}
       placeholder={placeholder}
       className={`${inputTypes[variant]} ${inputSizes[size]} ${common} ${className}`}

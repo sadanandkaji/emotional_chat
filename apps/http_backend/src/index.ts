@@ -10,7 +10,7 @@ const app=express()
 app.use(express.json())
 app.use(cors())
 
-app.post("/signup" ,(req,res)=>{
+app.post("/signup" ,async (req,res)=>{
     const parseddata=createuserschema.safeParse(req.body)
     if(!parseddata.success){
         res.json({
@@ -20,7 +20,7 @@ app.post("/signup" ,(req,res)=>{
     }
     try{
 
-        const user=client.user.create({
+        const user=await client.user.create({
             data:{
                 email:parseddata.data.username,
                 username:parseddata.data.name,
@@ -28,7 +28,7 @@ app.post("/signup" ,(req,res)=>{
             }
         })
         res.json({
-            message:user
+            message:"user created"
         })
     }catch(e){
         res.json({
@@ -130,3 +130,4 @@ app.get("/room/:slug",(req,res)=>{
     }
 
 })
+app.listen(3001)

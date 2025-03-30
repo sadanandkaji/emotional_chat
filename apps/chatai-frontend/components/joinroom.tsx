@@ -1,15 +1,18 @@
-
+"use client"
 import { Button } from "@repo/ui/button";
 import { Inputelement } from "@repo/ui/inputelement";
 import { useState } from "react";
 import { X } from "lucide-react";
+import axios from "axios";
 
 interface JoinRoomProps {
     onopen: boolean;
     onclose: () => void;
   }
   
-export default  function Joinroom({onopen ,onclose} :JoinRoomProps  ){
+export default async function Joinroom({onopen ,onclose} :JoinRoomProps  ){
+    
+  
   
         return<div>
 { onopen && <div>
@@ -28,7 +31,7 @@ export default  function Joinroom({onopen ,onclose} :JoinRoomProps  ){
             </div>
             </div>
             <div className="flex justify-center items-center pt-10">
-            <Inputelement variant="primary"  size="lg" placeholder="roomname" type="text" className="px-2 py-1 bg-gray-500 flex justify-center"></Inputelement>
+            <Inputelement  variant="primary"  size="lg" placeholder="roomname" type="text" className="px-2 py-1 bg-gray-500 flex justify-center"></Inputelement>
             </div >
            <div className="flex justify-center items-center pt-10">
             <Button onClick={onclose} variant="primary" className="text-lg  animate-in fade-in slide-in-from-bottom-6 duration-100 delay-50 border  px-8 py-1 border-white hover:bg-gray-500" size="lg" children="join room"></Button>
