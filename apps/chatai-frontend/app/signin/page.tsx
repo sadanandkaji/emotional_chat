@@ -4,24 +4,34 @@ import {Button} from "@repo/ui/button"
 import {Inputelement} from "@repo/ui/inputelement"
 import axios from "axios"
 import { useRef } from "react"
+import { signinschema } from "@repo/common/types"
 
 export default async  function signin(){
     const emailref=useRef<HTMLInputElement>(null)
     const passwordref=useRef<HTMLInputElement>(null)
 
-    const handlesignin=async ()=>{}
-       try{
-
-           const response= await axios.post(`${WS_BACKEND_URL} /signin`,{
-               email:emailref.current?.value,
-               password:passwordref.current?.value
+    const handlesignin=async ()=>{
+    const parseddata=signinschema.safeParse({
+        username:emailref.current?.value,
+        password:passwordref.current?.value
+    })
+    if(!parseddata.success){
+        alert("incorrect inputs")
+    }else{     
+        try{
+            
+            const response= await axios.post(`${WS_BACKEND_URL}/signin`,{
+                email:parseddata.data.username,
+                password:parseddata.data.password
             }
         )
         console.log(response)
-
+        
     }catch(e){
         console.error("signin failed",e)
     }
+}
+}
 
     
 

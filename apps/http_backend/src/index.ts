@@ -88,11 +88,26 @@ app.post("/create-room",usermiddleware,async (req,res)=>{
         })
     }
 })
+
+app.get("/all-rooms",usermiddleware,async (req,res)=>{
+    const userid=(req as any).id
+    try{
+        const rooms = await client.rooms.findMany({
+            where:{userid:userid}, orderBy: { id: "desc" } });
+        res.json({
+            rooms:rooms
+        })
+    }catch{
+        res.json({
+            message:"no room exists"
+        })
+    }
+})
 app.get("/chats/:roomid",usermiddleware,async (req,res)=>{
     const roomid= Number (req.params.roomid )
     
     try{
-        const chats=client.chat.findMany({
+        const chats=client.chat.findFirst({
             where:{
                 roomid:roomid
 
@@ -130,4 +145,7 @@ app.get("/room/:slug",(req,res)=>{
     }
 
 })
+
+
+
 app.listen(3001)

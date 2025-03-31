@@ -10,7 +10,7 @@ interface JoinRoomProps {
     onclose: () => void;
   }
   
-export default async function Joinroom({onopen ,onclose} :JoinRoomProps  ){
+export default function Joinroom({onopen ,onclose} :JoinRoomProps  ){
     
   
   
