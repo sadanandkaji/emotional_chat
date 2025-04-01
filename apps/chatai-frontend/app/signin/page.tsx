@@ -6,7 +6,7 @@ import axios from "axios"
 import { useRef } from "react"
 import { signinschema } from "@repo/common/types"
 
-export default async  function signin(){
+export default  function signin(){
     const emailref=useRef<HTMLInputElement>(null)
     const passwordref=useRef<HTMLInputElement>(null)
 
@@ -25,7 +25,9 @@ export default async  function signin(){
                 password:parseddata.data.password
             }
         )
-        console.log(response)
+        const token=response.data.token;
+        localStorage.setItem("token",token)
+        console.log("token:" ,response.data.token)
         
     }catch(e){
         console.error("signin failed",e)

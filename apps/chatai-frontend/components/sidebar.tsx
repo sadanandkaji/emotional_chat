@@ -30,7 +30,7 @@ export const Sidebar= ({slug}:{slug:string})=>{
     }
 
   
-      return<div className={`h-screen w-screen bg-gray-600 flex fixed`} >
+      return<div>
     <Addroom onopen={addroom } onclose={()=>{setaddroom(false)}}  ></Addroom>
     <Joinroom onopen={ joinroom} onclose={()=>{setjoinroom(false)}  }></Joinroom>
        <div className="flex">
@@ -48,7 +48,8 @@ export const Sidebar= ({slug}:{slug:string})=>{
                  </div>
                  <div className="pt-3">
 
-                 <div className=" p-2 rounded-lg  pr-4 pl-5 hover:bg-gray-700">
+                 <div className=" p-2 rounded-lg  pr-4 pl-5 ">
+                 <div className="pl-8">USERS</div>
            <Alluserrooms slug={slug} ></Alluserrooms>
                  </div>
                  </div>

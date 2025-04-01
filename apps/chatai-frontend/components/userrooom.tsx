@@ -5,44 +5,52 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface Room {
-  id: number;
-  slug: string;
+  id: number,
+  slug:string
 }
 
 export const Alluserrooms = ({ slug }: { slug: string }) => {
     const router=useRouter()
   const [rooms, setRooms] = useState<Room[]>([]);
 
-  useEffect(() => {
-    if (!slug) return;
+ 
 
+   
+  useEffect(() => {
     const getRooms = async () => {
       try {
-        const response = await axios.get(`${HTTP_BACKEND_URL}/all-rooms`);
-        const room = response.data.room;
-        setRooms([{ id: room.id, slug: room.slug }]);
+        const response = await axios.get(`${HTTP_BACKEND_URL}/all-rooms`,{
+          
+        });
+        const roomsData = response.data.rooms;
+        setRooms(roomsData); 
+        console.log("Fetched Rooms:", roomsData);
       } catch (error) {
         console.error("Error fetching rooms:", error);
       }
     };
 
     getRooms();
-  }, [slug]);
+  }, []);
 
-  return <div>
+  return (
+    <div>
       {rooms.length > 0 ? (
         rooms.map((x) => (
+          <div  key={x.id} className="px-6 py-1 rounded-lg hover:bg-gray-700">
           <div
-            key={x.id}
-            onClick={() => (router.push( `room/${x.id}`))} 
-            className="px-2 py-1 border bg-blue-200 text-black rounded-lg cursor-pointer"
+           
+            onClick={() => router.push(`room/${x.id}`)}
+            className="px-2 py-2 border bg-blue-200 text-black rounded-lg cursor-pointer"
           >
-            {x.slug}
+             {x.slug} 
+          </div>
           </div>
         ))
       ) : (
         <p>Loading rooms...</p>
       )}
     </div>
-  ;
+  );
+  
 };

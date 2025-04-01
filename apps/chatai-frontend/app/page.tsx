@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@repo/ui/button';
-import { Brain, MessageSquare, Shield, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 export default function Home() {
   return (

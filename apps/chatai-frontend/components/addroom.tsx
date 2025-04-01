@@ -19,9 +19,10 @@ export  const Addroom= ({onopen ,onclose} :AddRoomProps  )=>{
   const parseddata=roomschema.safeParse({roomname:roomref.current?.value})
 
 async  function  createhandleroom(){
-
+console.log(parseddata.data)
     if(!parseddata.success){
       alert("incorrect room inputs")
+
     }else{ 
       try{
        const response= await axios.post(`${HTTP_BACKEND_URL}/create-room`,{
