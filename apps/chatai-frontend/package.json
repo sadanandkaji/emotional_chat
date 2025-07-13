@@ -11,6 +11,7 @@
   "dependencies": {
     "@types/axios": "^0.14.4",
     "axios": "^1.8.4",
+    "jwt-decode": "^4.0.0",
     "lucide-react": "^0.485.0",
     "next": "15.2.4",
     "react": "^19.0.0",
@@ -18,6 +19,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@repo/common": "workspace:*",
     "@repo/ui": "workspace:*",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
@@ -26,7 +28,6 @@
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
     "tailwindcss": "^4",
-    "typescript": "^5",
-    "@repo/common":"workspace:*"
+    "typescript": "^5"
   }
 }

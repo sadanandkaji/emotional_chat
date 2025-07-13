@@ -1,20 +1,40 @@
-import jwt, { JwtPayload } from "jsonwebtoken"
-import { JWT_SECRET } from "@repo/backend_common/secret"
-import { NextFunction, Request, response, Response } from "express"
+import { Request, Response, NextFunction } from "express";
+import jwt, { JwtPayload } from "jsonwebtoken";
+import { AuthenticatedRequest } from "../types/AuthenticatedRequest";
 
-export function usermiddleware(req:Request,res:Response,next:NextFunction){
-    const token=req.headers["authorization"] as string
-    
-    const decoded=jwt.verify(token,JWT_SECRET) as JwtPayload
+const JWT_SECRET = "1234";
 
-    if(decoded && typeof decoded.id === "string" ){
-      (req as any ).id=decoded.id
-        next()
-    }else{
-        res.json({
-            message:"unauthorized"
-        })
+interface TokenPayload extends JwtPayload {
+  id: string;
+}
+
+export function usermiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  const authHeader = req.headers["authorization"];
+  const token =
+    typeof authHeader === "string" && authHeader.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : authHeader;
+
+  if (!token) {
+    res.status(401).json({ message: "Unauthorized: No token provided" });
+    return;
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload;
+
+    if (!decoded?.id) {
+      res.status(401).json({ message: "Unauthorized: Invalid token" });
+      return;
     }
-    
 
+    (req as AuthenticatedRequest).id = decoded.id;
+    next();
+  } catch (err) {
+    res.status(401).json({ message: "Unauthorized: Invalid token" });
+  }
 }

@@ -1,53 +1,115 @@
-"use client"
+"use client";
+
 import { Button } from "@repo/ui/button";
 import { Inputelement } from "@repo/ui/inputelement";
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { X, CheckCircle } from "lucide-react";
 import axios from "axios";
+import { HTTP_BACKEND_URL } from "@/config";
 
 interface JoinRoomProps {
-    onopen: boolean;
-    onclose: () => void;
+  onopen: boolean;
+  onclose: () => void;
+  onRoomJoined: (room: { id: number; slug: string; userid: string }) => void;
+}
+
+export default function Joinroom({ onopen, onclose, onRoomJoined }: JoinRoomProps) {
+  const roomref = useRef<HTMLInputElement>(null);
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (onopen) {
+      roomref.current?.focus();
+    }
+  }, [onopen]);
+
+  async function handleJoinRoom() {
+    const roomname = roomref.current?.value.trim() || "";
+
+    if (!roomname || roomname.length < 5 || roomname.length > 20) {
+      alert("Room name must be between 5 and 20 characters.");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("You must be signed in.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await axios.post(
+        `${HTTP_BACKEND_URL}/join-room`,
+        { roomname },
+        {
+          headers: {
+            Authorization: `${token}`,
+          },
+        }
+      );
+
+      if (res.data.success && res.data.room) {
+        setSuccess(true);
+        roomref.current!.value = "";
+        onRoomJoined(res.data.room);
+
+        setTimeout(() => {
+          setSuccess(false);
+          onclose();
+        }, 2000);
+      } else {
+        alert(res.data.message || "Failed to join room.");
+      }
+    } catch (e: any) {
+      alert(e?.response?.data?.message || "Server error");
+      console.error("Join room error:", e);
+    } finally {
+      setLoading(false);
+    }
   }
-  
-export default function Joinroom({onopen ,onclose} :JoinRoomProps  ){
-    
-  
-  
-        return<div>
-{ onopen && <div>
-    <div  className="h-screen w-screen bg-slate-900 fixed top-0 left-0 opacity-60 flex justify-center">
 
-    </div>
- <div  className="h-screen  w-screen fixed top-0 left-0  opacity-90  flex justify-center items-center   ">
-        <div className="flex justify-center items-center">
-
-        <div className="h-60 w-80 bg-gray-600 rounded-lg ">
-          <div>
-            <div className="border-b flex justify-center items-center">
-            <div className="text-3xl pr-4 ">join rooms</div>
-            <div className="text-lg flex items-center border-1 rounded-lg">
-                <button onClick={onclose} ><X/></button>
-            </div>
-            </div>
-            <div className="flex justify-center items-center pt-10">
-            <Inputelement  variant="primary"  size="lg" placeholder="roomname" type="text" className="px-2 py-1 bg-gray-500 flex justify-center"></Inputelement>
-            </div >
-           <div className="flex justify-center items-center pt-10">
-            <Button onClick={onclose} variant="primary" className="text-lg  animate-in fade-in slide-in-from-bottom-6 duration-100 delay-50 border  px-8 py-1 border-white hover:bg-gray-500" size="lg" children="join room"></Button>
-           </div>
-
+  return onopen ? (
+    <>
+      <div className="fixed inset-0 bg-black opacity-60 z-40" />
+      <div className="fixed inset-0 flex justify-center items-center z-50">
+        <div className="w-96 bg-gray-700 rounded-lg p-6 text-white shadow-xl relative">
+          <div className="flex justify-between items-center border-b pb-3 mb-4">
+            <h2 className="text-2xl font-semibold">Join Room</h2>
+            <button onClick={onclose}>
+              <X className="w-6 h-6 hover:text-red-400" />
+            </button>
           </div>
-        </div>
 
+          {!success ? (
+            <>
+              <Inputelement
+                reference={roomref}
+                variant="primary"
+                size="lg"
+                placeholder="Room name"
+                type="text"
+                className="w-full p-2 mb-4 bg-gray-600 rounded"
+              />
+              <Button
+                onClick={handleJoinRoom}
+                variant="primary"
+                size="lg"
+                disabled={loading}
+                className="w-full bg-gray-600 hover:bg-gray-500 border border-white"
+              >
+                {loading ? "Joining..." : "Join Room"}
+              </Button>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center p-10 text-green-400">
+              <CheckCircle className="w-16 h-16 mb-4" />
+              <p className="text-xl font-semibold">Joined Successfully!</p>
+            </div>
+          )}
         </div>
-
-    </div>
-    </div>
-     }
-       
-        </div>
-   
-    
-   
+      </div>
+    </>
+  ) : null;
 }

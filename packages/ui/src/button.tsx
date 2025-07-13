@@ -3,7 +3,7 @@
 import { ReactNode, FC } from "react";
 
 interface ButtonProps {
-  variant: "primary" | "send";
+  variant: "primary" | "send" | "not",
   className?: string;
   onClick?: () => void |any;
   size: "lg" | "sm";
@@ -14,6 +14,7 @@ interface ButtonProps {
 const buttonVariants = {
   primary: "bg-blue-500 hover:bg-blue-600 text-white",
   send: "bg-purple-500 hover:bg-purple-600 text-white",
+  not:""
 };
 
 const buttonSizes = {

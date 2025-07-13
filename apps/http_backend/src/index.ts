@@ -1,151 +1,218 @@
-import express from "express"
-import cors from "cors"
-import {createuserschema,roomschema,signinschema} from "@repo/common/types"
-import {client} from "@repo/db/client"
-import jwt from "jsonwebtoken"
-import {JWT_SECRET} from "@repo/backend_common/secret"
-import { usermiddleware } from "./middleware/usermiddleware"
+import express, { Request, Response } from "express";
+import cors from "cors";
+import jwt from "jsonwebtoken";
 
-const app=express()
-app.use(express.json())
-app.use(cors())
+import { createuserschema, roomschema, signinschema } from "@repo/common";
+import { client } from "@repo/db";
+import { usermiddleware } from "./middleware/usermiddleware";
 
-app.post("/signup" ,async (req,res)=>{
-    const parseddata=createuserschema.safeParse(req.body)
-    if(!parseddata.success){
-        res.json({
-            message:"icorrect inputs"
-        })
-        return;
-    }
-    try{
+const JWT_SECRET = "1234";
+const app = express();
+app.use(express.json());
+app.use(cors());
 
-        const user=await client.user.create({
-            data:{
-                email:parseddata.data.username,
-                username:parseddata.data.name,
-                password:parseddata.data.password
-            }
-        })
-        res.json({
-            message:"user created"
-        })
-    }catch(e){
-        res.json({
-            message:"user already exits"
-        })
-    }
+interface AuthenticatedRequest extends Request {
+  id: string;
+}
 
-})
+// -------------------- Signup --------------------
+app.post("/signup", async (req:any, res:any) => {
+  const parsed = createuserschema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ message: "Incorrect inputs" });
+  }
 
-app.post("/signin",async (req,res)=>{
-    const parseddata=signinschema.safeParse(req.body)
+  try {
+    await client.user.create({
+      data: {
+        email: parsed.data.username,
+        username: parsed.data.name,
+        password: parsed.data.password,
+      },
+    });
+    return res.status(201).json({ message: "User created" });
+  } catch (e) {
+    return res.status(409).json({ message: "User already exists" });
+  }
+});
 
-    if(!parseddata.success){
-        res.json({
-            message:"incorrect inputs"
-        })
-    }
+// -------------------- Signin --------------------
+app.post("/signin", async (req:any, res:any) => {
+  const parsed = signinschema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ message: "Incorrect inputs" });
+  }
 
-        const user=await client.user.findFirst({
-            where:{
-                email:parseddata.data?.username,
-                password:parseddata.data?.password
-            }
-        })
+  const user = await client.user.findFirst({
+    where: {
+      email: parsed.data.username,
+      password: parsed.data.password,
+    },
+  });
 
-    const token=jwt.sign({
-        id:user?.id
-    },JWT_SECRET)
+  if (!user) {
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
 
-    res.json({
-        token:token
-    })
-})
+  const token = jwt.sign({ id: user.id }, JWT_SECRET);
+  return res.status(200).json({ token });
+});
 
-app.post("/create-room",usermiddleware,async (req,res)=>{
-    const parseddata=roomschema.safeParse(req.body)
-    if(!parseddata.success){
-        res.json({
-            message:"incorrect inputs"
-        })
-        return
-    }
-     const userid=(req as any ).id
-    try{
-       const  room =await client.rooms.create({
-        data:{
-            slug:parseddata.data?.roomname,
-            userid:userid
-        }
-       })
-       res.json({
-        room: room.id
-       })
-    }catch{
-        res.json({
-            message:"room name already exists"
-        })
-    }
-})
+// -------------------- Create Room --------------------
+app.post("/create-room", usermiddleware, async (req: any, res:any) => {
+  const parsed = roomschema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ message: "Invalid room name" });
+  }
 
-app.get("/all-rooms",usermiddleware,async (req,res)=>{
-    const userid=(req as any).id
-    try{
-        const rooms = await client.rooms.findMany({
-            where:{userid:userid}, orderBy: { id: "desc" } });
-        res.json({
-            rooms:rooms
-        })
-    }catch{
-        res.json({
-            message:"no room exists"
-        })
-    }
-})
-app.get("/chats/:roomid",usermiddleware,async (req,res)=>{
-    const roomid= Number (req.params.roomid )
-    
-    try{
-        const chats=client.chat.findFirst({
-            where:{
-                roomid:roomid
+  try {
+    const room = await client.rooms.create({
+      data: {
+        slug: parsed.data.roomname,
+        userid: req.id,
+      },
+    });
+    return res.status(201).json({ room: room.id });
+  } catch (e) {
+    return res.status(409).json({ message: "Room name already exists" });
+  }
+});
 
-            },orderBy:{
-                id:"desc"
-            },take:30
+// -------------------- Join Room --------------------
+app.post("/join-room", usermiddleware, async (req: any, res:any) => {
+  const { roomname } = req.body;
+  if (!roomname || roomname.length < 5 || roomname.length > 20) {
+    return res.status(400).json({ message: "Invalid room name" });
+  }
 
-        })
-        res.json({
-            chats:chats
-        })
-    }catch{
-        res.json({
-            chats:[]
-        })
-    }
-})
+  const room = await client.rooms.findUnique({
+    where: { slug: roomname },
+    select: { id: true, slug: true, userid: true },
+  });
 
-app.get("/room/:slug",(req,res)=>{
-    try{
-        const slug=req.params.slug
-        const room =client.rooms.findFirst({
-            where:{
-                slug:slug
-            }
+  if (!room) {
+    return res.status(404).json({ message: "Room not found" });
+  }
 
-        })
-        res.json({
-            room:room
-        })
-    }catch{
-        res.json({
-            message:"no room exists"
-        })
-    }
+  const user = await client.user.findUnique({ where: { id: req.id } });
 
-})
+  // Add to joinedRooms if not already joined
+  await client.joinedRoom.upsert({
+    where: { userId_roomId: { userId: req.id, roomId: room.id } },
+    update: {},
+    create: { userId: req.id, roomId: room.id },
+  });
 
+  await client.chat.create({
+    data: {
+      roomid: room.id,
+      userid: req.id,
+      message: `${user?.username || "Someone"} joined the room.`,
+    },
+  });
 
+  return res.status(200).json({ success: true, roomId: room.id, room });
+});
 
-app.listen(3001)
+// -------------------- Get All Public Rooms --------------------
+app.get("/rooms", async (_req, res) => {
+  const rooms = await client.rooms.findMany({ orderBy: { id: "desc" } });
+  res.status(200).json({ rooms });
+});
+
+// -------------------- Get Rooms Created by User --------------------
+app.get("/user-rooms", usermiddleware, async (req: any, res:any) => {
+  const rooms = await client.rooms.findMany({
+    where: { userid: req.id },
+    orderBy: { id: "desc" },
+  });
+  res.status(200).json({ rooms });
+});
+
+// -------------------- Get Rooms Joined by User --------------------
+app.get("/joined-rooms", usermiddleware, async (req: any, res:any) => {
+  try {
+    const joined = await client.joinedRoom.findMany({
+      where: { userId: req.id },
+      include: { room: true },
+      orderBy: { id: "desc" },
+    });
+
+    const rooms = joined.map((j) => j.room);
+    res.status(200).json({ rooms });
+  } catch (error) {
+    res.status(500).json({ message: "Could not fetch joined rooms" });
+  }
+});
+
+// -------------------- Get Room Details by Slug --------------------
+app.get("/room/:slug", usermiddleware, async (req: any, res:any) => {
+  const slug = req.params.slug;
+
+  const room = await client.rooms.findFirst({
+    where: { slug },
+    select: { id: true, slug: true, userid: true },
+  });
+
+  if (!room) {
+    return res.status(404).json({ message: "Room not found" });
+  }
+
+  res.status(200).json({ room });
+});
+
+// -------------------- Get Chats for Room --------------------
+app.get("/chats/:roomid", usermiddleware, async (req: any, res:any) => {
+  const roomid = Number(req.params.roomid);
+
+  const chats = await client.chat.findMany({
+    where: { roomid },
+    orderBy: { id: "asc" },
+    include: { user: { select: { username: true } } },
+  });
+
+  const formattedChats = chats.map((chat) => ({
+    id: chat.id,
+    message: chat.message,
+    roomid: chat.roomid,
+    userid: chat.userid,
+    username: chat.user.username,
+    timestamp: chat.createdAt.toISOString(),
+    type: "chat",
+  }));
+
+  res.status(200).json({ chats: formattedChats });
+});
+
+// -------------------- Store AI Chat --------------------
+app.post("/ai-chat", usermiddleware, async (req: any, res:any) => {
+  const { message, response } = req.body;
+  if (!message || !response) {
+    return res.status(400).json({ message: "Message and response required" });
+  }
+
+  await client.aIChat.create({
+    data: {
+      userId: req.id,
+      message,
+      response,
+    },
+  });
+
+  res.status(201).json({ message: "AI chat stored successfully" });
+});
+
+// -------------------- Get AI Chats --------------------
+app.get("/ai-chats", usermiddleware, async (req: any, res:any) => {
+  const chats = await client.aIChat.findMany({
+    where: { userId: req.id },
+    orderBy: { createdAt: "desc" },
+  });
+
+  res.status(200).json({ chats });
+});
+
+// -------------------- Start Server --------------------
+app.listen(3001, () => {
+  console.log("🚀 HTTP server running on http://localhost:3001");
+});

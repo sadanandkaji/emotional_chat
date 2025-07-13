@@ -1,78 +1,96 @@
-"use client"
+"use client";
+
 import { Button } from "@repo/ui/button";
 import { Inputelement } from "@repo/ui/inputelement";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { X } from "lucide-react";
 import axios from "axios";
 import { HTTP_BACKEND_URL } from "@/config";
-import { roomschema } from "@repo/common/types";
+import { roomschema } from "@repo/common";
 
 interface AddRoomProps {
-    onopen: boolean;
-    onclose: () => void;
-  }
-  
-export  const Addroom= ({onopen ,onclose} :AddRoomProps  )=>{
-
-  const roomref=useRef<HTMLInputElement>(null)
-
-  const parseddata=roomschema.safeParse({roomname:roomref.current?.value})
-
-async  function  createhandleroom(){
-console.log(parseddata.data)
-    if(!parseddata.success){
-      alert("incorrect room inputs")
-
-    }else{ 
-      try{
-       const response= await axios.post(`${HTTP_BACKEND_URL}/create-room`,{
-          slug:parseddata.data?.roomname
-        })
-        console.log(response)
-        onclose()
-      }catch(e){
-      console.log("assigning roomname failed",e)
-      }
-    }
-    
-  }
-
-
-  
-        return<div>
-{ onopen && <div>
-    <div  className="h-screen w-screen bg-slate-900 fixed top-0 left-0 opacity-60 flex justify-center">
-
-    </div>
- <div  className="h-screen  w-screen fixed top-0 left-0  opacity-90  flex justify-center items-center   ">
-        <div className="flex justify-center items-center">
-
-        <div className="h-60 w-80 bg-gray-600 rounded-lg ">
-          <div>
-            <div className="border-b flex justify-center items-center">
-            <div className="text-3xl pr-4 ">create your room</div>
-            <div className="text-lg flex items-center border-1 rounded-lg">
-                <button onClick={onclose} ><X/></button>
-            </div>
-            </div>
-            <div className="flex justify-center items-center pt-10">
-            <Inputelement reference={roomref} variant="primary"  size="lg" placeholder="roomname" type="text" className="px-2 py-1 bg-gray-500 flex justify-center"></Inputelement>
-            </div >
-           <div className="flex justify-center items-center pt-10">
-            <Button onClick={createhandleroom} variant="primary" className="text-lg  animate-in fade-in slide-in-from-bottom-6 duration-100 delay-50 border  px-8 py-1 border-white hover:bg-gray-500" size="lg" children="create room"></Button>
-           </div>
-
-          </div>
-        </div>
-
-        </div>
-
-    </div>
-    </div>
-     }
-       
-        </div>
-   
-    
-   
+  onopen: boolean;
+  onclose: () => void;
 }
+
+export const Addroom = ({ onopen, onclose }: AddRoomProps) => {
+  const roomref = useRef<HTMLInputElement>(null);
+
+  async function createhandleroom() {
+  const roomname = roomref.current?.value || "";
+  const parsed = roomschema.safeParse({ roomname });
+
+  if (!parsed.success) {
+    alert("Room name must be between 5 and 20 characters.");
+    return;
+  }
+
+  const token = localStorage.getItem("token"); // or however you store it
+
+  if (!token) {
+    alert("User not authenticated");
+    return;
+  }
+
+  try {
+    const res = await axios.post(
+      `${HTTP_BACKEND_URL}/create-room`,
+      { roomname: parsed.data.roomname },
+      {
+        headers: {
+          Authorization:`${token}`,
+        },
+      }
+    );
+
+    if (res.data.room) {
+      console.log("Room created with ID:", res.data.room);
+      onclose(); // close modal
+    } else {
+      alert(res.data.message || "Failed to create room.");
+    }
+  } catch (e: any) {
+    alert(e?.response?.data?.message || "Server error");
+    console.error("Create room error:", e);
+  }
+}
+
+
+  return (
+    <>
+      {onopen && (
+        <>
+          <div className="fixed inset-0 bg-black opacity-60 z-40" />
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="bg-gray-800 rounded-xl shadow-xl p-6 w-96 text-white">
+              <div className="flex justify-between items-center border-b pb-3 mb-4">
+                <h2 className="text-2xl font-bold">Create Room</h2>
+                <button onClick={onclose}>
+                  <X className="w-6 h-6 hover:text-red-400" />
+                </button>
+              </div>
+
+              <Inputelement
+                reference={roomref}
+                placeholder="Room name"
+                type="text"
+                variant="primary"
+                size="lg"
+                className="w-full mb-4 p-2 bg-gray-700 rounded"
+              />
+
+              <Button
+                onClick={createhandleroom}
+                variant="primary"
+                size="lg"
+                className="w-full border border-white bg-gray-600 hover:bg-gray-500"
+              >
+                Create Room
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
+    </>
+  );
+};

@@ -7,32 +7,52 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User{
-  id  String @unique @default(uuid())
-  email String @unique 
-  username String
-  password String
-  rooms  Rooms[]
-  chats Chat[]
-
-
+model User {
+  id         String        @id @default(uuid()) @unique
+  email      String        @unique
+  username   String
+  password   String
+  rooms      Rooms[]       // Rooms created by this user
+  chats      Chat[]        
+  aiChats    AIChat[]      
+  joinedRooms JoinedRoom[] // ✅ NEW: rooms this user has joined
 }
 
-model Rooms{
-  id Int @unique @default(autoincrement())
-  slug String @unique
-  userid String
-  chats  Chat[]
-  user User @relation(fields: [userid] ,references: [id])
-
+model Rooms {
+  id         Int           @id @default(autoincrement()) @unique
+  slug       String        @unique
+  userid     String
+  chats      Chat[]
+  user       User          @relation(fields: [userid], references: [id])
+  joinedBy   JoinedRoom[]  // ✅ NEW: users who joined this room
 }
 
-model Chat{
-  id Int @unique @default(autoincrement())
-  message String
-  roomid Int 
-  userid  String
-  room Rooms @relation(fields: [roomid] ,references: [id])
-  user User @relation(fields: [userid],references: [id])
+model Chat {
+  id        Int      @id @default(autoincrement()) @unique
+  message   String
+  roomid    Int
+  userid    String
+  createdAt DateTime @default(now())
+  room      Rooms    @relation(fields: [roomid], references: [id])
+  user      User     @relation(fields: [userid], references: [id])
+}
 
+model AIChat {
+  id        Int      @id @default(autoincrement()) @unique
+  userId    String
+  message   String
+  response  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model JoinedRoom {
+  id      Int    @id @default(autoincrement())
+  userId  String
+  roomId  Int
+
+  user    User   @relation(fields: [userId], references: [id])
+  room    Rooms  @relation(fields: [roomId], references: [id])
+
+  @@unique([userId, roomId]) // prevent duplicate joins
 }

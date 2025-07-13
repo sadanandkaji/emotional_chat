@@ -1,0 +1,16 @@
+{
+  "name": "ai_backend",
+  "version": "1.0.0",
+  "main": "runpython.js",
+  "scripts": {
+    "run-python": "node runpython.js",
+    "dev": "node runpython.js"
+  },
+  "description": "Python FastAPI backend for AI chat features",
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@repo/backend_common": "workspace:*"
+  }
+}
+
